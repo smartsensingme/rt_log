@@ -1,0 +1,4 @@
+name: rt_log
+build:
+  cmake: .
+  kconfig: Kconfig

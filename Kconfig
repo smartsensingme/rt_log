@@ -1,0 +1,119 @@
+config RT_LOG
+    bool "ESP-IDF-style logging facade over Zephyr"
+    depends on LOG && CBPRINTF_COMPLETE
+    default n
+    help
+      Tag/severity filtering in front of native Zephyr logging. No private
+      output driver, thread, queue, timer or floating-point formatter.
+
+if RT_LOG
+
+config RT_LOG_MAX_LEVEL
+    int "Maximum compiled level (0 none, 1 error, 2 warning, 3 info, 4 debug, 5 verbose)"
+    range 0 5
+    default 4
+    help
+      Teto global inclusivo 0..5. Remove chamadas acima do teto em compilação,
+      sem avaliar seus argumentos. Reduz código e strings; filtros runtime e
+      teto local não podem restaurar mensagens removidas.
+
+config RT_LOG_DEFAULT_LEVEL
+    int "Initial runtime tag level"
+    range 0 5
+    default 4
+    help
+      Teto inicial para tags sem override, limitado por MAX_LEVEL na consulta.
+      Com controle dinâmico, level_set("*", ...) substitui este padrão e limpa
+      overrides. Níveis mais altos aumentam volume e custo de transmissão.
+
+config RT_LOG_DYNAMIC_LEVEL_CONTROL
+    bool "Runtime level control per tag"
+    default y
+    help
+      Disable to remove the override table and its lock. Runtime setters then
+      return ENOTSUP and filtering uses DEFAULT_LEVEL/MAX_LEVEL only.
+
+config RT_LOG_TIMESTAMP
+    bool "Show native backend timestamps"
+    default y
+    help
+      Fornece o default nativo de exibição do timestamp; a opção explícita
+      LOG_BACKEND_SHOW_TIMESTAMP prevalece. Acrescenta texto e custo de saída,
+      sem criar relógio ou temporizador no módulo.
+
+config RT_LOG_FORMAT_TIMESTAMP
+    bool "Readable timestamp (native HH:MM:SS format by default)"
+    depends on RT_LOG_TIMESTAMP
+    default y
+    help
+      Fornece o default de LOG_BACKEND_FORMAT_TIMESTAMP. Usa apresentação
+      legível do backend, normalmente uptime HH:MM:SS; desligar usa formato
+      bruto nativo. Não fornece RTC, época Unix ou sincronização de hora.
+
+config RT_LOG_SHOW_LEVEL
+    bool "Show severity in the native prefix"
+    default y
+    help
+      Fornece o default de LOG_BACKEND_SHOW_LEVEL. Acrescenta severidade ao
+      prefixo textual; desligar só oculta o prefixo, sem alterar os filtros.
+      A escolha explícita da opção nativa prevalece.
+
+config RT_LOG_TAG_SLOTS
+    int "Maximum explicit runtime tag overrides"
+    range 1 64
+    default 16
+    help
+      Número máximo de overrides distintos, sem contar o padrão. Tabela
+      estática, sem malloc; custo por entrada inclui TAG_MAX_LEN + 1 bytes,
+      enum e alinhamento. Busca linear limitada. Sem controle dinâmico não
+      há tabela; tabela cheia retorna -ENOSPC ao inserir uma nova tag.
+
+config RT_LOG_TAG_MAX_LEN
+    int "Maximum tag length"
+    range 8 63
+    default 31
+    help
+      Limite em bytes, excluindo NUL, para todos os nomes de tag consultados
+      ou definidos. Não conta caracteres Unicode. Aumentá-lo amplia cada
+      entrada dinâmica e o trabalho máximo de comparação; nomes maiores
+      são rejeitados, sem truncamento.
+
+config RT_LOG_COLOR
+    bool "Native backend severity colors"
+    default y
+    help
+      Fornece defaults ANSI ao backend: E vermelho, W amarelo, I verde e
+      D/V azul. Requer terminal compatível e aumenta bytes transmitidos.
+      Opções nativas explícitas prevalecem; não muda severidade ou filtro.
+
+config RT_LOG_FLOAT_SUPPORT
+    bool "Native decimal/scientific floating-point formatting"
+    default y
+    select CBPRINTF_FP_SUPPORT
+    help
+      Seleciona CBPRINTF_FP_SUPPORT para formatação nativa %f/%e/%g, com
+      custo de código e processamento. Não implementa parser nem ativa
+      gerenciamento de energia/FPU. Desligar não força o símbolo nativo a n
+      se outra configuração o habilitar; não usar floats sem suporte.
+endif
+
+# Modules are sourced before subsystem defaults in Zephyr. Supply defaults,
+# rather than select: explicit native-backend choices remain available.
+
+config LOG_BACKEND_SHOW_TIMESTAMP
+    default RT_LOG_TIMESTAMP if RT_LOG
+
+config LOG_BACKEND_FORMAT_TIMESTAMP
+    default RT_LOG_FORMAT_TIMESTAMP if RT_LOG
+
+config LOG_BACKEND_SHOW_LEVEL
+    default RT_LOG_SHOW_LEVEL if RT_LOG
+
+config LOG_BACKEND_SHOW_COLOR
+    default RT_LOG_COLOR if RT_LOG
+
+config LOG_INFO_COLOR_GREEN
+    default RT_LOG_COLOR if RT_LOG
+
+config LOG_DBG_COLOR_BLUE
+    default RT_LOG_COLOR if RT_LOG
