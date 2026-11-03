@@ -1,8 +1,19 @@
 # rt_log
 
-Camada de logging inspirada na ESP-IDF, sobre o logger nativo do Zephyr.
-Implementação original, Apache-2.0. Independente de nRF, ESP32, Seeed e Meshtastic.
-Não é substituição integral/ABI da biblioteca ESP-IDF e não copia sua implementação.
+`rt_log` oferece uma API de logs para aplicações Zephyr, com mensagens por
+severidade e tag, filtros configuráveis e controle de nível em execução.
+Use para registrar falhas, estado e informações de desenvolvimento de forma
+uniforme entre os componentes da aplicação, ajustando o detalhamento por tag.
+
+As macros `RT_LOGE`, `RT_LOGW`, `RT_LOGI`, `RT_LOGD` e `RT_LOGV` encaminham as
+mensagens ao logger nativo do Zephyr. Formatação, timestamps, cores e saída
+aproveitam a infraestrutura nativa; backend e modo de processamento são
+configurados pela aplicação. Não é um coletor de métricas nem armazenamento
+durável de eventos.
+
+A API é inspirada na ESP-IDF, com implementação original Apache-2.0, independente
+de nRF, ESP32, Seeed e Meshtastic. Não oferece substituição integral/ABI da
+biblioteca ESP-IDF e não copia sua implementação.
 
 ## Uso
 
@@ -272,8 +283,8 @@ limites em docs/VALIDATION.md. Nenhum comando de teste acima grava a placa.
 
 ## Repositório independente
 
-Baseline local 0.1.0, Apache-2.0, sem remoto configurado. Esta pasta é a unidade de
-reutilização: CMakeLists.txt, Kconfig, include/, src/, tests/ e zephyr/module.yml.
+Repositório: [smartsensingme/rt_log](https://github.com/smartsensingme/rt_log).
+Versão 0.1.0, licença Apache-2.0. Esta pasta é a unidade de reutilização: CMakeLists.txt, Kconfig, include/, src/, tests/ e zephyr/module.yml.
 Adicionar sua pasta a ZEPHYR_EXTRA_MODULES antes de find_package(Zephyr), ou fornecer
 por manifesto west. Não depende dos módulos de diagnóstico ou da aplicação.
 Caminhos usados no projeto consumidor não fazem parte da API desta biblioteca.
